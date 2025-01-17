@@ -1,9 +1,10 @@
 import streamlit as st
 
-def calculate_optimal_strategy(rank, prepaid_tax, target="zero_tax", selected_strategies=None):
+def calculate_optimal_strategy(rank, monthly_salary, prepaid_tax, target="zero_tax", selected_strategies=None):
     """
-    교사 호봉 기반 최적 전략 계산
+    교사 호봉 기반 또는 월급 기반 최적 전략 계산
     :param rank: 호봉 (연봉 추정에 활용)
+    :param monthly_salary: 사용자가 입력한 월급
     :param prepaid_tax: 기납부 세액
     :param target: 목표 ("zero_tax", "refund_optimization")
     :param selected_strategies: 선택한 전략 (리스트)
@@ -21,8 +22,11 @@ def calculate_optimal_strategy(rank, prepaid_tax, target="zero_tax", selected_st
         36: 5246900, 37: 5364100, 38: 5464800, 39: 5582000, 40: 5821200
     }
 
-    # 호봉을 기반으로 연봉 계산
-    total_income = salary_table.get(rank, 0) * 12
+    # 연봉 계산 (호봉 또는 월급 기준)
+    if monthly_salary > 0:
+        total_income = monthly_salary * 12
+    else:
+        total_income = salary_table.get(rank, 0) * 12
 
     # 근로소득공제 계산
     if total_income <= 5000000:
@@ -48,6 +52,11 @@ def calculate_optimal_strategy(rank, prepaid_tax, target="zero_tax", selected_st
         income_tax = (
             12000000 * 0.06 + 34000000 * 0.15 + 42000000 * 0.24 + (taxable_income - 88000000) * 0.35
         )
+
+    # 신용카드 및 체크카드 권장 사용액 계산
+    card_threshold = total_income * 0.25  # 연봉의 25%
+    credit_card_recommendation = max(0, card_threshold * 0.15)  # 신용카드 공제율: 초과분의 15%
+    debit_card_recommendation = max(0, card_threshold * 0.3)  # 체크카드 공제율: 초과분의 30%
 
     # 선택된 전략에 따른 비율 재조정
     strategy_weights = {
@@ -79,15 +88,23 @@ def calculate_optimal_strategy(rank, prepaid_tax, target="zero_tax", selected_st
         for strategy, weight in adjusted_weights.items():
             recommendations[f"{strategy} 추천 사용액"] = taxable_income * weight
 
+    # 연금저축 추천 금액
+    pension_recommendation = min(9000000, max(0, income_tax - prepaid_tax))
+    recommendations["연금저축 추천 납입액"] = pension_recommendation
+
+    recommendations["신용카드 권장 사용액"] = credit_card_recommendation
+    recommendations["체크카드 권장 사용액"] = debit_card_recommendation
+
     return income_tax, recommendations
 
 # Streamlit 웹페이지 구성
 st.title("교사 연말정산 최적 전략 추천기")
-st.markdown("교사의 호봉을 입력하고 소비 전략을 체크박스로 선택하세요.")
+st.markdown("교사의 호봉을 입력하거나 월급을 입력하고 소비 전략을 체크박스로 선택하세요.")
 
 # 사용자 입력 받기
 st.sidebar.header("입력 항목")
-rank = st.sidebar.number_input("교사 호봉 입력", min_value=1, max_value=40, step=1)
+rank = st.sidebar.number_input("교사 호봉 입력 (월급 입력 시 생략)", min_value=1, max_value=40, step=1)
+monthly_salary = st.sidebar.number_input("월급 입력 (원, 호봉 입력 시 생략)", min_value=0, step=10000)
 prepaid_tax = st.sidebar.number_input("기납부 세액 (원)", min_value=0, step=10000)
 
 target = st.sidebar.selectbox(
@@ -113,7 +130,7 @@ if st.sidebar.checkbox("기부금"):
 
 # 계산 버튼
 if st.button("전략 계산하기"):
-    final_tax, recommendations = calculate_optimal_strategy(rank, prepaid_tax, target, selected_strategies)
+    final_tax, recommendations = calculate_optimal_strategy(rank, monthly_salary, prepaid_tax, target, selected_strategies)
 
     # 결과 표시
     st.subheader("계산 결과")
@@ -124,7 +141,4 @@ if st.button("전략 계산하기"):
         st.write("선택된 항목이 없거나 추천할 전략이 없습니다.")
     else:
         for key, value in recommendations.items():
-            if key == "status":
-                st.write(f"상태: {value}")
-            else:
-                st.write(f"{key}: {value:,.0f}원")
+            st.write(f"{key}: {value:,.0f}원")
