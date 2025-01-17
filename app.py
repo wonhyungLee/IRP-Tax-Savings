@@ -82,20 +82,14 @@ def calculate_optimal_strategy(rank, monthly_salary, prepaid_tax, target="zero_t
             additional_deductions_needed = (income_tax - prepaid_tax) / 0.15  # 대략적인 추가 공제 필요액 계산
             for strategy, weight in adjusted_weights.items():
                 recommendations[f"{strategy} 추천 사용액"] = additional_deductions_needed * weight
-        else:
-            recommendations["status"] = "세액 0 달성"
     elif target == "refund_optimization":
-        for strategy, weight in adjusted_weights.items():
-            recommendations[f"{strategy} 추천 사용액"] = taxable_income * weight
-
-    # 선택된 항목만 출력
-    if "신용카드" in selected_strategies:
-        recommendations["신용카드 권장 사용액"] = credit_card_recommendation
-    if "체크카드" in selected_strategies:
-        recommendations["체크카드 권장 사용액"] = debit_card_recommendation
+        if "신용카드" in selected_strategies:
+            recommendations["신용카드 권장 사용액"] = credit_card_recommendation
+        if "체크카드" in selected_strategies:
+            recommendations["체크카드 권장 사용액"] = debit_card_recommendation
 
     # 연금저축 추천 금액
-    if "연금저축" in selected_strategies:
+    if "연금저축" in selected_strategies and target == "zero_tax":
         pension_recommendation = min(9000000, max(0, income_tax - prepaid_tax))
         recommendations["연금저축 추천 납입액"] = pension_recommendation
 
