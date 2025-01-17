@@ -5,7 +5,7 @@ def calculate_optimal_strategy(rank, prepaid_tax, target="zero_tax"):
     교사 호봉 기반 최적 전략 계산
     :param rank: 호봉 (연봉 추정에 활용)
     :param prepaid_tax: 기납부 세액
-    :param target: 목표 ("zero_tax" 또는 "refund_optimization")
+    :param target: 목표 ("zero_tax", "no_pension", "refund_optimization")
     :return: 추천 전략
     """
     # 호봉별 봉급표 (2024년 기준)
@@ -60,6 +60,16 @@ def calculate_optimal_strategy(rank, prepaid_tax, target="zero_tax"):
             }
         else:
             recommendations["status"] = "세액 0 달성"
+    elif target == "no_pension":
+        if income_tax > prepaid_tax:
+            additional_deductions_needed = (income_tax - prepaid_tax) / 0.15
+            recommendations = {
+                "신용카드 추천 사용액": additional_deductions_needed * 0.7,
+                "체크카드 추천 사용액": additional_deductions_needed * 0.3,
+                "기부금 추천 사용액": additional_deductions_needed * 0.2,
+            }
+        else:
+            recommendations["status"] = "세액 0 달성"
     elif target == "refund_optimization":
         recommendations = {
             "신용카드 추천 사용액": taxable_income * 0.15,
@@ -78,7 +88,11 @@ st.sidebar.header("입력 항목")
 rank = st.sidebar.number_input("교사 호봉 입력", min_value=1, max_value=40, step=1)
 prepaid_tax = st.sidebar.number_input("기납부 세액 (원)", min_value=0, step=10000)
 
-target = st.sidebar.selectbox("목표 선택", ["zero_tax", "refund_optimization"], format_func=lambda x: "세액 0 만들기" if x == "zero_tax" else "환급 최적화")
+target = st.sidebar.selectbox(
+    "목표 선택",
+    ["zero_tax", "no_pension", "refund_optimization"],
+    format_func=lambda x: "세액 0 만들기" if x == "zero_tax" else ("연금저축 안 쓰기" if x == "no_pension" else "환급 받기")
+)
 
 # 계산 버튼
 if st.button("전략 계산하기"):
