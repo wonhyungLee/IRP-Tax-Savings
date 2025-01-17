@@ -49,40 +49,35 @@ def calculate_optimal_strategy(rank, prepaid_tax, target="zero_tax", selected_st
             12000000 * 0.06 + 34000000 * 0.15 + 42000000 * 0.24 + (taxable_income - 88000000) * 0.35
         )
 
+    # 선택된 전략에 따른 비율 재조정
+    strategy_weights = {
+        "신용카드": 0.4,
+        "체크카드": 0.3,
+        "연금저축": 0.2,
+        "의료비": 0.1,
+        "보험료": 0.1,
+        "기부금": 0.1,
+    }
+
+    # 선택된 전략만 반영하여 비율 재조정
+    total_weight = sum(strategy_weights[key] for key in selected_strategies) if selected_strategies else 0
+    if total_weight > 0:
+        adjusted_weights = {key: strategy_weights[key] / total_weight for key in selected_strategies}
+    else:
+        adjusted_weights = {}
+
     # 추천 전략 계산
     recommendations = {}
     if target == "zero_tax":
         if income_tax > prepaid_tax:
             additional_deductions_needed = (income_tax - prepaid_tax) / 0.15  # 대략적인 추가 공제 필요액 계산
-            if selected_strategies:
-                if "신용카드" in selected_strategies:
-                    recommendations["신용카드 추천 사용액"] = additional_deductions_needed * 0.4
-                if "체크카드" in selected_strategies:
-                    recommendations["체크카드 추천 사용액"] = additional_deductions_needed * 0.3
-                if "연금저축" in selected_strategies:
-                    recommendations["연금저축 추천 납입액"] = additional_deductions_needed * 0.2
-                if "의료비" in selected_strategies:
-                    recommendations["의료비 추천 사용액"] = additional_deductions_needed * 0.1
-                if "보험료" in selected_strategies:
-                    recommendations["보험료 추천 납입액"] = additional_deductions_needed * 0.1
-                if "기부금" in selected_strategies:
-                    recommendations["기부금 추천 납입액"] = additional_deductions_needed * 0.1
+            for strategy, weight in adjusted_weights.items():
+                recommendations[f"{strategy} 추천 사용액"] = additional_deductions_needed * weight
         else:
             recommendations["status"] = "세액 0 달성"
     elif target == "refund_optimization":
-        if selected_strategies:
-            if "신용카드" in selected_strategies:
-                recommendations["신용카드 추천 사용액"] = taxable_income * 0.15
-            if "체크카드" in selected_strategies:
-                recommendations["체크카드 추천 사용액"] = taxable_income * 0.3
-            if "연금저축" in selected_strategies:
-                recommendations["연금저축 추천 납입액"] = 1000000
-            if "의료비" in selected_strategies:
-                recommendations["의료비 추천 사용액"] = taxable_income * 0.1
-            if "보험료" in selected_strategies:
-                recommendations["보험료 추천 납입액"] = taxable_income * 0.1
-            if "기부금" in selected_strategies:
-                recommendations["기부금 추천 납입액"] = taxable_income * 0.1
+        for strategy, weight in adjusted_weights.items():
+            recommendations[f"{strategy} 추천 사용액"] = taxable_income * weight
 
     return income_tax, recommendations
 
