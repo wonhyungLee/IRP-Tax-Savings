@@ -88,12 +88,16 @@ def calculate_optimal_strategy(rank, monthly_salary, prepaid_tax, target="zero_t
         for strategy, weight in adjusted_weights.items():
             recommendations[f"{strategy} 추천 사용액"] = taxable_income * weight
 
-    # 연금저축 추천 금액
-    pension_recommendation = min(9000000, max(0, income_tax - prepaid_tax))
-    recommendations["연금저축 추천 납입액"] = pension_recommendation
+    # 선택된 항목만 출력
+    if "신용카드" in selected_strategies:
+        recommendations["신용카드 권장 사용액"] = credit_card_recommendation
+    if "체크카드" in selected_strategies:
+        recommendations["체크카드 권장 사용액"] = debit_card_recommendation
 
-    recommendations["신용카드 권장 사용액"] = credit_card_recommendation
-    recommendations["체크카드 권장 사용액"] = debit_card_recommendation
+    # 연금저축 추천 금액
+    if "연금저축" in selected_strategies:
+        pension_recommendation = min(9000000, max(0, income_tax - prepaid_tax))
+        recommendations["연금저축 추천 납입액"] = pension_recommendation
 
     return income_tax, recommendations
 
@@ -140,8 +144,5 @@ if st.button("전략 계산하기"):
     if not recommendations:
         st.write("선택된 항목이 없거나 추천할 전략이 없습니다.")
     else:
-        displayed_keys = set()
         for key, value in recommendations.items():
-            if key not in displayed_keys:
-                st.write(f"{key}: {value:,.0f}원")
-                displayed_keys.add(key)
+            st.write(f"{key}: {value:,.0f}원")
