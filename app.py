@@ -1,11 +1,12 @@
 import streamlit as st
 
-def calculate_optimal_strategy(rank, prepaid_tax, target="zero_tax"):
+def calculate_optimal_strategy(rank, prepaid_tax, target="zero_tax", selected_strategies=None):
     """
     교사 호봉 기반 최적 전략 계산
     :param rank: 호봉 (연봉 추정에 활용)
     :param prepaid_tax: 기납부 세액
-    :param target: 목표 ("zero_tax", "no_pension", "refund_optimization")
+    :param target: 목표 ("zero_tax", "refund_optimization")
+    :param selected_strategies: 선택한 전략 (리스트)
     :return: 추천 전략
     """
     # 호봉별 봉급표 (2024년 기준)
@@ -53,35 +54,39 @@ def calculate_optimal_strategy(rank, prepaid_tax, target="zero_tax"):
     if target == "zero_tax":
         if income_tax > prepaid_tax:
             additional_deductions_needed = (income_tax - prepaid_tax) / 0.15  # 대략적인 추가 공제 필요액 계산
-            recommendations = {
-                "신용카드 추천 사용액": additional_deductions_needed * 0.7,
-                "체크카드 추천 사용액": additional_deductions_needed * 0.3,
-                "연금저축 추천 납입액": additional_deductions_needed * 0.2,
-            }
-        else:
-            recommendations["status"] = "세액 0 달성"
-    elif target == "no_pension":
-        if income_tax > prepaid_tax:
-            additional_deductions_needed = (income_tax - prepaid_tax) / 0.15
-            recommendations = {
-                "신용카드 추천 사용액": additional_deductions_needed * 0.7,
-                "체크카드 추천 사용액": additional_deductions_needed * 0.3,
-                "기부금 추천 사용액": additional_deductions_needed * 0.2,
-            }
+            if "신용카드" in selected_strategies:
+                recommendations["신용카드 추천 사용액"] = additional_deductions_needed * 0.4
+            if "체크카드" in selected_strategies:
+                recommendations["체크카드 추천 사용액"] = additional_deductions_needed * 0.3
+            if "연금저축" in selected_strategies:
+                recommendations["연금저축 추천 납입액"] = additional_deductions_needed * 0.2
+            if "의료비" in selected_strategies:
+                recommendations["의료비 추천 사용액"] = additional_deductions_needed * 0.1
+            if "보험료" in selected_strategies:
+                recommendations["보험료 추천 납입액"] = additional_deductions_needed * 0.1
+            if "기부금" in selected_strategies:
+                recommendations["기부금 추천 납입액"] = additional_deductions_needed * 0.1
         else:
             recommendations["status"] = "세액 0 달성"
     elif target == "refund_optimization":
-        recommendations = {
-            "신용카드 추천 사용액": taxable_income * 0.15,
-            "체크카드 추천 사용액": taxable_income * 0.3,
-            "연금저축 추천 납입액": 1000000,
-        }
+        if "신용카드" in selected_strategies:
+            recommendations["신용카드 추천 사용액"] = taxable_income * 0.15
+        if "체크카드" in selected_strategies:
+            recommendations["체크카드 추천 사용액"] = taxable_income * 0.3
+        if "연금저축" in selected_strategies:
+            recommendations["연금저축 추천 납입액"] = 1000000
+        if "의료비" in selected_strategies:
+            recommendations["의료비 추천 사용액"] = taxable_income * 0.1
+        if "보험료" in selected_strategies:
+            recommendations["보험료 추천 납입액"] = taxable_income * 0.1
+        if "기부금" in selected_strategies:
+            recommendations["기부금 추천 납입액"] = taxable_income * 0.1
 
     return income_tax, recommendations
 
 # Streamlit 웹페이지 구성
 st.title("교사 연말정산 최적 전략 추천기")
-st.markdown("교사의 호봉을 입력하면 최적의 소비 전략을 추천합니다.")
+st.markdown("교사의 호봉을 입력하고 소비 전략을 체크박스로 선택하세요.")
 
 # 사용자 입력 받기
 st.sidebar.header("입력 항목")
@@ -90,13 +95,28 @@ prepaid_tax = st.sidebar.number_input("기납부 세액 (원)", min_value=0, ste
 
 target = st.sidebar.selectbox(
     "목표 선택",
-    ["zero_tax", "no_pension", "refund_optimization"],
-    format_func=lambda x: "세액 0 만들기" if x == "zero_tax" else ("연금저축 안 쓰기" if x == "no_pension" else "환급 받기")
+    ["zero_tax", "refund_optimization"],
+    format_func=lambda x: "세액 0 만들기" if x == "zero_tax" else "환급 받기"
 )
+
+st.sidebar.header("세부 전략 선택")
+selected_strategies = []
+if st.sidebar.checkbox("신용카드"):
+    selected_strategies.append("신용카드")
+if st.sidebar.checkbox("체크카드"):
+    selected_strategies.append("체크카드")
+if st.sidebar.checkbox("연금저축"):
+    selected_strategies.append("연금저축")
+if st.sidebar.checkbox("의료비"):
+    selected_strategies.append("의료비")
+if st.sidebar.checkbox("보험료"):
+    selected_strategies.append("보험료")
+if st.sidebar.checkbox("기부금"):
+    selected_strategies.append("기부금")
 
 # 계산 버튼
 if st.button("전략 계산하기"):
-    final_tax, recommendations = calculate_optimal_strategy(rank, prepaid_tax, target)
+    final_tax, recommendations = calculate_optimal_strategy(rank, prepaid_tax, target, selected_strategies)
 
     # 결과 표시
     st.subheader("계산 결과")
