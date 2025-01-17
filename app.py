@@ -1,12 +1,16 @@
 import streamlit as st
 
 # 계산 함수
-def calculate_tax(income, dependents, card_spending, medical_expenses, donations, pension_saving):
+def calculate_tax(income, dependents, credit_card_spending, debit_cash_spending, medical_expenses, donations, pension_saving):
     # 기본 공제
     basic_deduction = 1500000 + (dependents * 1500000)
     
     # 신용카드 공제
-    card_deduction = max(0, card_spending - (income * 0.25)) * 0.15
+    card_limit = income * 0.25
+    credit_card_deduction = max(0, credit_card_spending - card_limit) * 0.15
+
+    # 체크카드/현금영수증 공제
+    debit_cash_deduction = max(0, debit_cash_spending - card_limit) * 0.30
 
     # 의료비 공제
     medical_deduction = max(0, medical_expenses - (income * 0.03)) * 0.15
@@ -18,7 +22,8 @@ def calculate_tax(income, dependents, card_spending, medical_expenses, donations
     pension_deduction = min(pension_saving, 7000000) * 0.15
 
     # 총 공제 금액
-    total_deduction = basic_deduction + card_deduction + medical_deduction + donation_deduction + pension_deduction
+    total_deduction = (basic_deduction + credit_card_deduction + debit_cash_deduction +
+                       medical_deduction + donation_deduction + pension_deduction)
 
     # 결정세액 계산
     total_taxable_income = income - total_deduction
@@ -27,12 +32,15 @@ def calculate_tax(income, dependents, card_spending, medical_expenses, donations
     return total_deduction, tax
 
 # 조언 제공 함수
-def provide_tips(income, dependents, card_spending, medical_expenses, donations, pension_saving):
+def provide_tips(income, dependents, credit_card_spending, debit_cash_spending, medical_expenses, donations, pension_saving):
     tips = []
 
-    # 신용카드 공제 팁
-    if card_spending < income * 0.25:
-        tips.append("신용카드/체크카드 사용액이 총급여의 25%를 초과해야 공제가 가능합니다.")
+    # 신용카드/체크카드 공제 팁
+    card_limit = income * 0.25
+    if credit_card_spending < card_limit:
+        tips.append("신용카드 사용액이 총급여의 25%를 초과해야 공제가 가능합니다.")
+    if debit_cash_spending < card_limit:
+        tips.append("체크카드 및 현금영수증 사용액이 총급여의 25%를 초과해야 공제가 가능합니다.")
 
     # 의료비 공제 팁
     if medical_expenses < income * 0.03:
@@ -55,15 +63,21 @@ st.write("입력한 정보를 바탕으로 예상 세액을 계산하고, 맞춤
 # 사용자 입력
 income = st.number_input("연간 총급여 (원):", min_value=0, step=1000000)
 dependents = st.number_input("부양 가족 수 (본인 제외):", min_value=0, step=1)
-card_spending = st.number_input("신용카드/체크카드/현금영수증 사용 금액 (원):", min_value=0, step=100000)
+credit_card_spending = st.number_input("신용카드 사용 금액 (원):", min_value=0, step=100000)
+debit_cash_spending = st.number_input("체크카드/현금영수증 사용 금액 (원):", min_value=0, step=100000)
 medical_expenses = st.number_input("의료비 지출 금액 (원):", min_value=0, step=10000)
 donations = st.number_input("기부금 (원):", min_value=0, step=10000)
 pension_saving = st.number_input("연금저축/IRP 납입 금액 (원):", min_value=0, step=100000)
 
 # 계산 및 조언
 if st.button("세액 계산 및 조언"):
-    total_deduction, tax = calculate_tax(income, dependents, card_spending, medical_expenses, donations, pension_saving)
-    tips = provide_tips(income, dependents, card_spending, medical_expenses, donations, pension_saving)
+    total_deduction, tax = calculate_tax(
+        income, dependents, credit_card_spending, debit_cash_spending, 
+        medical_expenses, donations, pension_saving)
+    
+    tips = provide_tips(
+        income, dependents, credit_card_spending, debit_cash_spending, 
+        medical_expenses, donations, pension_saving)
 
     st.write("### 계산 결과")
     st.write(f"💰 **총 공제 금액:** {total_deduction:,.0f} 원")
