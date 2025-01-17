@@ -125,8 +125,11 @@ if st.button("전략 계산하기"):
     st.write(f"**결정세액:** {final_tax:,.0f}원")
 
     st.subheader("추천 전략")
-    for key, value in recommendations.items():
-        if key == "status":
-            st.write(f"상태: {value}")
-        else:
-            st.write(f"{key}: {value:,.0f}원")
+    if not recommendations:
+        st.write("선택된 항목이 없거나 추천할 전략이 없습니다.")
+    else:
+        for key, value in recommendations.items():
+            if key == "status":
+                st.write(f"상태: {value}")
+            else:
+                st.write(f"{key}: {value:,.0f}원")
