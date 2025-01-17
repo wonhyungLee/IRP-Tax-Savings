@@ -140,5 +140,8 @@ if st.button("전략 계산하기"):
     if not recommendations:
         st.write("선택된 항목이 없거나 추천할 전략이 없습니다.")
     else:
+        displayed_keys = set()
         for key, value in recommendations.items():
-            st.write(f"{key}: {value:,.0f}원")
+            if key not in displayed_keys:
+                st.write(f"{key}: {value:,.0f}원")
+                displayed_keys.add(key)
