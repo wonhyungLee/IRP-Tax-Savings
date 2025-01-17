@@ -54,33 +54,35 @@ def calculate_optimal_strategy(rank, prepaid_tax, target="zero_tax", selected_st
     if target == "zero_tax":
         if income_tax > prepaid_tax:
             additional_deductions_needed = (income_tax - prepaid_tax) / 0.15  # 대략적인 추가 공제 필요액 계산
-            if "신용카드" in selected_strategies:
-                recommendations["신용카드 추천 사용액"] = additional_deductions_needed * 0.4
-            if "체크카드" in selected_strategies:
-                recommendations["체크카드 추천 사용액"] = additional_deductions_needed * 0.3
-            if "연금저축" in selected_strategies:
-                recommendations["연금저축 추천 납입액"] = additional_deductions_needed * 0.2
-            if "의료비" in selected_strategies:
-                recommendations["의료비 추천 사용액"] = additional_deductions_needed * 0.1
-            if "보험료" in selected_strategies:
-                recommendations["보험료 추천 납입액"] = additional_deductions_needed * 0.1
-            if "기부금" in selected_strategies:
-                recommendations["기부금 추천 납입액"] = additional_deductions_needed * 0.1
+            if selected_strategies:
+                if "신용카드" in selected_strategies:
+                    recommendations["신용카드 추천 사용액"] = additional_deductions_needed * 0.4
+                if "체크카드" in selected_strategies:
+                    recommendations["체크카드 추천 사용액"] = additional_deductions_needed * 0.3
+                if "연금저축" in selected_strategies:
+                    recommendations["연금저축 추천 납입액"] = additional_deductions_needed * 0.2
+                if "의료비" in selected_strategies:
+                    recommendations["의료비 추천 사용액"] = additional_deductions_needed * 0.1
+                if "보험료" in selected_strategies:
+                    recommendations["보험료 추천 납입액"] = additional_deductions_needed * 0.1
+                if "기부금" in selected_strategies:
+                    recommendations["기부금 추천 납입액"] = additional_deductions_needed * 0.1
         else:
             recommendations["status"] = "세액 0 달성"
     elif target == "refund_optimization":
-        if "신용카드" in selected_strategies:
-            recommendations["신용카드 추천 사용액"] = taxable_income * 0.15
-        if "체크카드" in selected_strategies:
-            recommendations["체크카드 추천 사용액"] = taxable_income * 0.3
-        if "연금저축" in selected_strategies:
-            recommendations["연금저축 추천 납입액"] = 1000000
-        if "의료비" in selected_strategies:
-            recommendations["의료비 추천 사용액"] = taxable_income * 0.1
-        if "보험료" in selected_strategies:
-            recommendations["보험료 추천 납입액"] = taxable_income * 0.1
-        if "기부금" in selected_strategies:
-            recommendations["기부금 추천 납입액"] = taxable_income * 0.1
+        if selected_strategies:
+            if "신용카드" in selected_strategies:
+                recommendations["신용카드 추천 사용액"] = taxable_income * 0.15
+            if "체크카드" in selected_strategies:
+                recommendations["체크카드 추천 사용액"] = taxable_income * 0.3
+            if "연금저축" in selected_strategies:
+                recommendations["연금저축 추천 납입액"] = 1000000
+            if "의료비" in selected_strategies:
+                recommendations["의료비 추천 사용액"] = taxable_income * 0.1
+            if "보험료" in selected_strategies:
+                recommendations["보험료 추천 납입액"] = taxable_income * 0.1
+            if "기부금" in selected_strategies:
+                recommendations["기부금 추천 납입액"] = taxable_income * 0.1
 
     return income_tax, recommendations
 
